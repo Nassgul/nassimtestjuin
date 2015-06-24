@@ -6,7 +6,7 @@ define("DB_MDP", "");
 define("DB_NAME", "nassimtestjuin");
 
 // constant contenant la racine du site
-define("CHEMIN_RACINE", "http://http://localhost/testjuin/");
+define("CHEMIN_RACINE", "http://localhost/testjuin/");
 
 // nom des dossiers de destination des images (chemin relatif)
 $dossier_ori = "images/originales/"; // dossier de l'image originale
