@@ -6,3 +6,14 @@
  * and open the template in the editor.
  */
 
+?>
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <h1>Télépro-photos.fr</h1>
+</body>
+</html>
