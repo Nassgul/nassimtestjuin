@@ -3,10 +3,10 @@
 define("DB_SERVER", "localhost");
 define("DB_USER", "root");
 define("DB_MDP", "");
-define("DB_NAME", "prepatestjuin");
+define("DB_NAME", "nassimtestjuin");
 
 // constant contenant la racine du site
-define("CHEMIN_RACINE", "http://localhost/bases/prepa-test-juin/");
+define("CHEMIN_RACINE", "http://http://localhost/testjuin/");
 
 // nom des dossiers de destination des images (chemin relatif)
 $dossier_ori = "images/originales/"; // dossier de l'image originale
