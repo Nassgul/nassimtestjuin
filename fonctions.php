@@ -31,7 +31,8 @@ function upload_originales($fichier,$destination,$ext){
     if($extension_origine==="jpeg"){ $extension_origine = "jpg"; }
     
     // création du nom final  (appel de la fonction chaine_hasard, pour la chaine de caractère aléatoire)
-    $nom_final = chaine_hasard(50);
+    $ladate=date("YmdHis");
+    $nom_final = $ladate.chaine_hasard(36);
     
     // on a besoin du nom final dans le tableau $sortie si la fonction réussit
     $sortie['poids'] = filesize($fichier['tmp_name']);
@@ -59,6 +60,7 @@ function upload_originales($fichier,$destination,$ext){
  */
 
 function chaine_hasard($nombre_caracteres){
+    
     $caracteres = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,0,1,2,3,4,5,6,7,8,9";
     $tableau = explode(",", $caracteres);
     $nb_element_tab = count($tableau);
@@ -83,7 +85,7 @@ function traite_chaine($chaine){
  *  "nom complet du fichier original sans extension",
  *  "extension de l'original",
  *  "dossier de destination",
- *  "largeur en pixel maximale de l'image",
+ *  "largeur en pixel maximum de l'image",
  *  "hauteur maximale en pixel de l'image",
  *  "Qualitée jpeg de 0 à 100",
  *  "Proportion (true par défaut), garde les proportions, mettre false si on souhaite centrer l'image et la couper");

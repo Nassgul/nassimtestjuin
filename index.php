@@ -37,7 +37,7 @@ $sql = "SELECT p.lenom,p.lextension,p.letitre,p.lenom, u.lelogin,
     GROUP_CONCAT(r.lintitule SEPARATOR '~~') AS lintitule 
     FROM photo p
     INNER JOIN utilisateur u ON u.id = p.utilisateur_id
-    LEFT JOIN rubriques_has_photo h ON h.photo_id = p.id
+    LEFT JOIN photo_has_rubriques h ON h.photo_id = p.id
     LEFT JOIN rubriques r ON h.rubriques_id = r.id
     GROUP BY p.id
     ORDER BY p.id DESC; 
@@ -73,7 +73,18 @@ $recup_sql = mysqli_query($mysqli, $sql) or die(mysqli_error($mysqli));
                             </ul>
                         </li>
                         <li><a href="">Nous Contacter</a></li>
-                        <?php if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {}else{echo "<li><a href='deconnect.php'>Déconnexion</a></li>";} ?>
+                        <?php if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {}else{switch ($_SESSION['nom_perm']) {
+                            // si on est l'admin
+                            case 0 :
+                                echo "<ul><li><a href='modif.php'>Administration</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li></ul>";
+                                break;
+                            // si on est modérateur
+                            case 1:
+                                echo "<ul><li><a href='modere.php'>Modération</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li></ul>";
+                                break;
+                            // si autre droit (ici simple utilisateur)
+                            default :
+                        echo "<ul><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li></ul>";}} ?>
                     </ul>
                 </nav>
                 <div id="connect">
@@ -98,19 +109,19 @@ $recup_sql = mysqli_query($mysqli, $sql) or die(mysqli_error($mysqli));
                       
 
                         // liens  suivant la permission utilisateur
-                        switch ($_SESSION['laperm']) {
+                      /*  switch ($_SESSION['laperm']) {
                             // si on est l'admin
                             case 0 :
-                                echo "<a href='modif.php'>Administration</a> - <a href='membre.php'>Espace client</a>";
+                                echo "<ul><li><a href='modif.php'>Administration</a></li><li><a href='membre.php'>Espace client</a></li></ul>";
                                 break;
                             // si on est modérateur
                             case 1:
-                                echo "<a href='modere.php'>Modération</a> - <a href='membre.php'>Espace client</a>";
+                                echo "<ul><li><a href='modere.php'>Modération</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li></ul>";
                                 break;
                             // si autre droit (ici simple utilisateur)
                             default :
-                                echo "<a href='membre.php'>Espace client</a>";
-                        }
+                                echo "<ul><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li></ul>";
+                        }*/
                     }
                     ?>
                 </div>
@@ -128,7 +139,7 @@ $recup_sql = mysqli_query($mysqli, $sql) or die(mysqli_error($mysqli));
                         echo "<a href='?section=" . $explose_id[$clef] . "'>";
                         echo $valeur . "</a><br/>";
                     }
-                    echo "<p>" . $ligne['lenom'] . "<br /> par <strong>" . $ligne['lelogin'] . "</strong></p>";
+                    echo "<p>" . $ligne['letitre'] . "<br /> par <strong>" . $ligne['lelogin'] . "</strong></p>";
                     echo "</div>";
                 }
                 ?> 
