@@ -4,7 +4,31 @@ session_start();
 require_once 'config.php';
 require_once 'connect.php';
 require_once 'fonctions.php';
+// si tentative de connexion
+if (isset($_POST['lelogin'])) {
+    $lelogin = traite_chaine($_POST['lelogin']);
+    $lepass = traite_chaine($_POST['lepass']);
 
+    // vérification de l'utilisateur dans la db
+    $sql = "SELECT  u.id, u.lemail, u.lenom AS nom_perm2, u.lenom,
+		d.lenom AS nom_perm, d.lenom, d.laperm 
+	FROM utilisateur u
+		INNER JOIN droit d ON u.droit_id = d.id
+    WHERE u.lelogin='$lelogin' AND u.lepass = '$lepass';";
+    $requete = mysqli_query($mysqli, $sql)or die(mysqli_error($mysqli));
+    $recup_user = mysqli_fetch_assoc($requete);
+
+    // vérifier si on a récupèré un utilisateur
+    if (mysqli_num_rows($requete)) { // vaut true si 1 résultat (ou plus), false si 0
+        // si l'utilisateur est bien connecté
+        $_SESSION = $recup_user; // transformation des résultats de la requête en variable de session
+        $_SESSION['sid'] = session_id(); // récupération de la clef de session
+        $_SESSION['lelogin'] = $lelogin; // récupération du login (du POST après traitement)
+        // var_dump($_SESSION);
+        // redirection vers la page d'accueil (pour éviter les doubles connexions par F5)
+        header('location: ' . CHEMIN_RACINE);
+    }
+}
 // si on est pas (ou plus) connecté
 if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
     header("location: deconnect.php");
@@ -53,13 +77,13 @@ if(isset($_POST['letitre'])&&isset($_FILES['lefichier'])){
             if(isset($_POST['section'])){
             foreach($_POST['section'] AS $clef => $valeur){
                 if(ctype_digit($valeur)){
-                    mysqli_query($mysqli,"INSERT INTO rubriques_has_photo VALUES ($id_photo,$valeur);")or die(mysqli_error($mysqli));
+                    mysqli_query($mysqli,"INSERT INTO photo_has_rubriques VALUES ($id_photo,$valeur);")or die(mysqli_error($mysqli));
                 }
             }
             }
             
         }else{
-            echo 'Erreur lors de la création des images redimenssionnées';
+            echo 'Erreur lors de la création des images redimensionnées';
         }
         
     }    
@@ -76,8 +100,8 @@ if(isset($_GET['delete'])&& ctype_digit($_GET['delete'])){
     $sql1="SELECT lenom, lextension FROM photo WHERE id=$idphoto;";
     $nom_photo = mysqli_fetch_assoc(mysqli_query($mysqli,$sql1));
     
-    // supression dans la table rubriques_has_photos (sans l'utilisation de la clef étrangère)
-    $sql2="DELETE FROM rubriques_has_photo WHERE photo_id = $idphoto";
+    // supression dans la table photo_has_rubriques (sans l'utilisation de la clef étrangère)
+    $sql2="DELETE FROM photo_has_rubriques WHERE photo_id = $idphoto";
     mysqli_query($mysqli,$sql2);
     
     // puis suppression dans la table photo
@@ -98,7 +122,7 @@ if(isset($_GET['delete'])&& ctype_digit($_GET['delete'])){
 // récupérations des images de l'utilisateur connecté dans la table photo avec leurs sections même si il n'y a pas de sections sélectionnées (jointure externe avec LEFT)
 $sql = "SELECT p.*, GROUP_CONCAT(r.id) AS idrub, GROUP_CONCAT(r.lintitule SEPARATOR '|||' ) AS lintitule
     FROM photo p
-	LEFT JOIN rubriques_has_photo h ON h.photo_id = p.id
+	LEFT JOIN photo_has_rubriques h ON h.photo_id = p.id
     LEFT JOIN rubriques r ON h.rubriques_id = r.id
         WHERE p.utilisateur_id = ".$_SESSION['id']."
         GROUP BY p.id
@@ -106,9 +130,9 @@ $sql = "SELECT p.*, GROUP_CONCAT(r.id) AS idrub, GROUP_CONCAT(r.lintitule SEPARA
     ";
 $recup_sql = mysqli_query($mysqli,$sql) or die(mysqli_error($mysqli));
 
-// récupération de toutes les rubriquess pour le formulaire d'insertion
-$sql="SELECT * FROM rubriques ORDER BY lintitule ASC;";
-$recup_section = mysqli_query($mysqli, $sql);
+// récupération de toutes les rubriques pour le formulaire d'insertion
+$sql2="SELECT * FROM rubriques ORDER BY lintitule ASC;";
+$recup_section = mysqli_query($mysqli, $sql2);
 ?>
 <!DOCTYPE html>
 <html>
@@ -121,28 +145,9 @@ $recup_section = mysqli_query($mysqli, $sql);
     <body>
          <div id="content">
              <div id="haut"><h1>Espace membre de <a href="./" >Télépro-photos.fr</a></h1> 
-                 <nav>
-                    <ul>
-                        <li><a href="">Accueil</a></li>
-                        <li tabindex="0" class="onclick-menu">
-                            <ul class="onclick-menu-content" >
-                                <li><a href="">Animaux</a></li>
-                                <li><a href="">Architectures</a></li>
-                                <li><a href="">Artistiques</a></li>
-                                <li><a href="">Personnes</a></li>
-                                <li><a href="">Paysages</a></li>
-                                <li><a href="">Sports</a></li>
-                                <li><a href="">Technologies</a></li>
-                                <li><a href="">Transports</a></li>
-                                <li><a href="">Divers</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="">Nous Contacter</a></li>
-                        <?php if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {}else{echo "<li><a href='deconnect.php'>Déconnexion</a></li>";} ?>
-                    </ul>
-                </nav>
+                 
                 <div id="connect"><?php // texte d'accueil
-                        echo "<h3>Bonjour ".$_SESSION['lenom'].'</h3>';
+                        echo "<h3>Bonjour ".$_SESSION['nom_perm2'].'</h3>';
                         echo "<p>Vous êtes connecté en tant que <span title='".$_SESSION['lenom']."'>".$_SESSION['nom_perm']."</span></p>";
                         echo "<h5><a href='deconnect.php'>Déconnexion</a></h5>";
                         
@@ -167,7 +172,7 @@ $recup_section = mysqli_query($mysqli, $sql);
                     <input type="text" name="letitre" required /><br/>
                    <!-- <input type="hidden" name="MAX_FILE_SIZE" value="50000000" /> -->
                     <input type="file" name="lefichier" required /><br/>
-                    <textarea name="ladesc"></textarea><br/>
+                    <textarea name="ladesc" required></textarea><br/>
                     
                     <input type="submit" value="Envoyer le fichier" /><br/>
                     Sections : <?php
