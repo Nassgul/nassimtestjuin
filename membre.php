@@ -4,36 +4,12 @@ session_start();
 require_once 'config.php';
 require_once 'connect.php';
 require_once 'fonctions.php';
-// si tentative de connexion
-if (isset($_POST['lelogin'])) {
-    $lelogin = traite_chaine($_POST['lelogin']);
-    $lepass = traite_chaine($_POST['lepass']);
 
-    // vérification de l'utilisateur dans la db
-    $sql = "SELECT  u.id, u.lemail, u.lenom AS nom_perm2, u.lenom,
-		d.lenom AS nom_perm, d.lenom, d.laperm 
-	FROM utilisateur u
-		INNER JOIN droit d ON u.droit_id = d.id
-    WHERE u.lelogin='$lelogin' AND u.lepass = '$lepass';";
-    $requete = mysqli_query($mysqli, $sql)or die(mysqli_error($mysqli));
-    $recup_user = mysqli_fetch_assoc($requete);
 
-    // vérifier si on a récupèré un utilisateur
-    if (mysqli_num_rows($requete)) { // vaut true si 1 résultat (ou plus), false si 0
-        // si l'utilisateur est bien connecté
-        $_SESSION = $recup_user; // transformation des résultats de la requête en variable de session
-        $_SESSION['sid'] = session_id(); // récupération de la clef de session
-        $_SESSION['lelogin'] = $lelogin; // récupération du login (du POST après traitement)
-        // var_dump($_SESSION);
-        // redirection vers la page d'accueil (pour éviter les doubles connexions par F5)
-        header('location: ' . CHEMIN_RACINE);
-    }
-}
 // si on est pas (ou plus) connecté
 if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
-    header("location: deconnect.php");
+    header("location: connection.php");
 }
-
 // si on a envoyé le formulaire et qu'un fichier est bien attaché
 if(isset($_POST['letitre'])&&isset($_FILES['lefichier'])){
     
@@ -83,14 +59,11 @@ if(isset($_POST['letitre'])&&isset($_FILES['lefichier'])){
             }
             
         }else{
-            echo 'Erreur lors de la création des images redimensionnées';
+            echo 'Erreur lors de la création des images redimenssionnées';
         }
         
-    }    
+    }   
 }
-
-
-
 // si on confirme la suppression
 if(isset($_GET['delete'])&& ctype_digit($_GET['delete'])){
     $idphoto = $_GET['delete'];
@@ -100,7 +73,7 @@ if(isset($_GET['delete'])&& ctype_digit($_GET['delete'])){
     $sql1="SELECT lenom, lextension FROM photo WHERE id=$idphoto;";
     $nom_photo = mysqli_fetch_assoc(mysqli_query($mysqli,$sql1));
     
-    // supression dans la table photo_has_rubriques (sans l'utilisation de la clef étrangère)
+    // supression dans la table photo_has_rubrique (sans l'utilisation de la clef étrangère)
     $sql2="DELETE FROM photo_has_rubriques WHERE photo_id = $idphoto";
     mysqli_query($mysqli,$sql2);
     
@@ -114,65 +87,135 @@ if(isset($_GET['delete'])&& ctype_digit($_GET['delete'])){
     unlink($dossier_gd.$nom_photo['lenom'].".jpg");
     unlink($dossier_mini.$nom_photo['lenom'].".jpg");
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// on va compter le nombre de lignes de résultat pour la pagination, le COUNT ne renvoie q'une ligne de résultat
+$recup_nb_test = "SELECT COUNT(*) AS nb FROM photo;";
+// requete de récupération
+$tot = mysqli_query($mysqli,$recup_nb_test);
+// transformation du résultat en tableau associatif
+$maligne = mysqli_fetch_assoc($tot);
+// variable contenant le nombre total de proverbes
+$nb_total = $maligne['nb'];
+
+
+// vérification de la variable GET de pagination
+if(isset($_GET[$get_pagination])){
+    // si elle est au bon format (int positif)
+    if(ctype_digit($_GET[$get_pagination])){
+        // récupération de la valeur dans l'url
+        $page_actu = $_GET[$get_pagination];
+    }else{ // si pas valide
+       $page_actu = 1; 
+    }
+}else{ // si non existante
+    $page_actu = 1;
+}
+
+// création de la variable $debut utilisée dans le LIMIT
+$debut = ($page_actu -1) * $elements_par_page;
 
 
 
 
-
-// récupérations des images de l'utilisateur connecté dans la table photo avec leurs sections même si il n'y a pas de sections sélectionnées (jointure externe avec LEFT)
 $sql = "SELECT p.*, GROUP_CONCAT(r.id) AS idrub, GROUP_CONCAT(r.lintitule SEPARATOR '|||' ) AS lintitule
     FROM photo p
 	LEFT JOIN photo_has_rubriques h ON h.photo_id = p.id
     LEFT JOIN rubriques r ON h.rubriques_id = r.id
-        WHERE p.utilisateur_id = ".$_SESSION['id']."
         GROUP BY p.id
-        ORDER BY p.id DESC;
+        ORDER BY p.id DESC
+        LIMIT $debut,$elements_par_page;
     ";
 $recup_sql = mysqli_query($mysqli,$sql) or die(mysqli_error($mysqli));
 
-// récupération de toutes les rubriques pour le formulaire d'insertion
-$sql2="SELECT * FROM rubriques ORDER BY lintitule ASC;";
-$recup_section = mysqli_query($mysqli, $sql2);
+
+$sql="SELECT * FROM rubriques ORDER BY lintitule ASC;";
+$recup_section = mysqli_query($mysqli, $sql);
+
+
+
+$recup_nb_test = "SELECT COUNT(*) AS nb FROM photo;";
+
+$tot = mysqli_query($mysqli,$recup_nb_test);
+
+$maligne = mysqli_fetch_assoc($tot);
+
+$nb_total = $maligne['nb'];
+
 ?>
 <!DOCTYPE html>
 <html>
     <head>
         <meta charset="UTF-8">
-        <title><?php echo $_SESSION['lelogin']?> - Votre Espace membre</title>
-        <link rel="stylesheet" href="style.css" />
+        <title>Accueil</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
         <script src="monjs.js"></script>
     </head>
-    <body>
-         <div id="content">
-             <div id="haut"><h1>Espace membre de <a href="./" >Télépro-photos.fr</a></h1> 
-                 
-                <div id="connect"><?php // texte d'accueil
-                        echo "<h3>Bonjour ".$_SESSION['nom_perm2'].'</h3>';
-                        echo "<p>Vous êtes connecté en tant que <span title='".$_SESSION['lenom']."'>".$_SESSION['nom_perm']."</span></p>";
-                        echo "<h5><a href='deconnect.php'>Déconnexion</a></h5>";
-                        
-                        // liens  suivant la permission utilisateur
-                        switch($_SESSION['laperm']){
+    <body>	<nav>
+        <ul>
+             <li><a href="index.php">Accueil</a></li>            
+             <li><a>Catégories</a>
+                    <ul>         
+                        <?php
+                        $sqlr = "SELECT * FROM rubriques";
+    $q = mysqli_query($mysqli,$sqlr);
+
+
+    while($r = mysqli_fetch_assoc($q))
+    {
+    echo "<li><a href='categories.php?idsection=".$r['id']."'>".$r['lintitule']."</a></li>";
+    }
+
+                                         ?>
+                    </ul>
+ </li>
+            <li><a href="contact.php">Nous contacter</a></li>
+           <?php 
+		   
+		   if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {echo " ";}else{switch ($_SESSION['laperm']) {
                             // si on est l'admin
                             case 0 :
-                               echo "<a href='admin.php'>Administration</a> - <a href='membre.php'>Espace client</a>";
+                                echo "<li><a href='admin.php'>Administration</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si on est modérateur
                             case 1:
-                                echo "<a href='modere.php'>Modération</a> - <a href='membre.php'>Espace client</a>";
+                                echo "<li><a href='modere.php'>Modération</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si autre droit (ici simple utilisateur)
-                            default :
-                                echo "<a href='membre.php'>Espace membre</a>";
-                        }?></div>
+                            case 2 :
+                        echo "<li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";};} ?>
+       </ul>
+</nav>
+	<div id="content">
+                         <?php
+        if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
+    ?><h1>Telepro-photos.fr</h1>
+                        <form action="" name="connection" method="POST">
+                            <input type="text" name="lelogin" required />
+                            <input type="password" name="lepass" required />
+                            <input type="submit" value="Connexion" />
+                        </form>
+                       
+                        <?php
+}else{
+echo "<h1>Telepro-photos.fr</h1>";
+    
+                            echo "<h3>Bonjour ".$_SESSION['lenom'].'</h3>';
+                        echo "<p>Vous êtes connecté en tant que <span >".$_SESSION['nom_perm']."</span></p>";
+                        
+                        
+      }
+        ?>
+
             </div>
-             <div id="milieu">
+            
+
                  <div id="formulaire">
                 <form action="membre.php" enctype="multipart/form-data" method="POST" name="onposte">
                     <input type="text" name="letitre" required /><br/>
                    <!-- <input type="hidden" name="MAX_FILE_SIZE" value="50000000" /> -->
                     <input type="file" name="lefichier" required /><br/>
-                    <textarea name="ladesc" required></textarea><br/>
+                    <textarea name="ladesc"></textarea><br/>
                     
                     <input type="submit" value="Envoyer le fichier" /><br/>
                     Sections : <?php
@@ -182,10 +225,16 @@ $recup_section = mysqli_query($mysqli, $sql2);
                     }
                     ?>
                 </form>
-            </div>
-                 <div id="lesphotos">
+            </div><div id="pagination">
+                  <?php
+            echo pagination($nb_total, $page_actu, $elements_par_page, $get_pagination)
+            ?>  
+       
+                 <div id="bloc">
                      <?php
+                     
                      while($ligne = mysqli_fetch_assoc($recup_sql)){
+                         
                  echo "<div class='miniatures'>";
                  echo "<h4>".$ligne['letitre']."</h4>";
                  echo "<a href='".CHEMIN_RACINE.$dossier_gd.$ligne['lenom'].".jpg' target='_blank'><img src='".CHEMIN_RACINE.$dossier_mini.$ligne['lenom'].".jpg' alt='' /></a>";
@@ -196,14 +245,15 @@ $recup_section = mysqli_query($mysqli, $sql2);
                  foreach($sections AS $key => $valeur){
                      echo " $valeur<br/>";
                  }
-                 echo"<br/><a href='modif.php?id=".$ligne['id']."'><img src='img/modifier.png' alt='modifier' /></a> <img onclick='supprime(".$ligne['id'].");' src='img/supprimer.png' alt='supprimer' />
+                 echo"<img onclick='supprime(".$ligne['id'].");' src='img/supprimer.png' alt='supprimer' />
                      </p>";
                  echo "</div>";
-               }
+                 }
                ?>
-                 </div>
-             </div>
-            <div id="bas"></div>
-         </div>
+                             
+                 
+        </div>        
+              </div>   
+             
     </body>
 </html>
