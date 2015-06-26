@@ -4,31 +4,8 @@ session_start();
 require_once 'config.php';
 require_once 'connect.php';
 require_once 'fonctions.php';
-// si tentative de connexion
-if (isset($_POST['lelogin'])) {
-    $lelogin = traite_chaine($_POST['lelogin']);
-    $lepass = traite_chaine($_POST['lepass']);
 
-    // vérification de l'utilisateur dans la db
-    $sql = "SELECT  u.id, u.lemail, u.lenom AS nom_perm2, u.lenom,
-		d.lenom AS nom_perm, d.lenom, d.laperm 
-	FROM utilisateur u
-		INNER JOIN droit d ON u.droit_id = d.id
-    WHERE u.lelogin='$lelogin' AND u.lepass = '$lepass';";
-    $requete = mysqli_query($mysqli, $sql)or die(mysqli_error($mysqli));
-    $recup_user = mysqli_fetch_assoc($requete);
 
-    // vérifier si on a récupèré un utilisateur
-    if (mysqli_num_rows($requete)) { // vaut true si 1 résultat (ou plus), false si 0
-        // si l'utilisateur est bien connecté
-        $_SESSION = $recup_user; // transformation des résultats de la requête en variable de session
-        $_SESSION['sid'] = session_id(); // récupération de la clef de session
-        $_SESSION['lelogin'] = $lelogin; // récupération du login (du POST après traitement)
-        // var_dump($_SESSION);
-        // redirection vers la page d'accueil (pour éviter les doubles connexions par F5)
-        header('location: ' . CHEMIN_RACINE);
-    }
-}
 // si on est pas (ou plus) connecté
 if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
     header("location: deconnect.php");
@@ -38,7 +15,7 @@ if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
 if(isset($_GET['id'])&&  ctype_digit($_GET['id'])){
     $idphoto = $_GET['id'];
 }else{
-   header("location: membre.php");
+   header("location: client.php");
 }
 
 // si on a envoyé le formulaire et qu'un fichier est bien attaché
@@ -51,7 +28,7 @@ if(isset($_POST['letitre'])){
     // mise à jour du titre et du texte
     mysqli_query($mysqli,"UPDATE photo SET letitre='$letitre', ladesc='$ladesc' WHERE id = $idphoto");
     
-    // supression dans la table photo_has_rubriques (sans l'utilisation de la clef étrangère)
+    // supression dans la table photo_has_rubrique (sans l'utilisation de la clef étrangère)
     $sql2="DELETE FROM photo_has_rubriques WHERE photo_id = $idphoto";
     mysqli_query($mysqli,$sql2);
     
@@ -59,12 +36,12 @@ if(isset($_POST['letitre'])){
             if(isset($_POST['section'])){
             foreach($_POST['section'] AS $clef => $valeur){
                 if(ctype_digit($valeur)){
-                    // insertion dans la table photo_has_rubriques
+                    // insertion dans la table photo_has_rubrique
                     mysqli_query($mysqli,"INSERT INTO photo_has_rubriques VALUES ($idphoto,$valeur);")or die(mysqli_error($mysqli));
                 }
             }
             }
-            header("Location: membre.php");
+            header("Location: client.php");
 }
 
 
@@ -90,34 +67,70 @@ $recup_section = mysqli_query($mysqli, $sql);
 <html>
     <head>
         <meta charset="UTF-8">
+		<link rel="stylesheet" type="text/css" href="style.css">
         <title></title>
     </head>
     <body>
-         <div id="content">
-             <div id="haut"><h1>Modifier la photo <a href="./">photos.be</a></h1> 
-                <div id="connect"><?php // texte d'accueil
-                        echo "<h3>Bonjour ".$_SESSION['nom_perm2'].'</h3>';
-                        echo "<p>Vous êtes connecté en tant que <span title='".$_SESSION['laperm']."'>".$_SESSION['nom_perm']."</span></p>";
-                        echo "<h5><a href='deconnect.php'>Déconnexion</a></h5>";
-                        
-                        // liens  suivant la permission utilisateur
-                        switch($_SESSION['laperm']){
+        	<nav>
+        <ul>
+             <li><a href="index.php">Accueil</a></li>            
+             <li><a>Catégories</a>
+                    <ul>         
+                        <?php
+                        $sqlrub = "SELECT * FROM rubriques";
+    $queryrub = mysqli_query($mysqli,$sqlrub);
+
+
+    while($row = mysqli_fetch_assoc($queryrub))
+    {
+    echo "<li><a href='categories.php?idsection=".$row['id']."'>".$row['lintitule']."</a></li>";
+    }
+
+                                         ?>
+                    </ul>
+ </li>
+            <li><a href="contact.php">Nous contacter</a></li>
+           <?php 
+		   
+		   if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {echo " ";}else{switch ($_SESSION['laperm']) {
                             // si on est l'admin
                             case 0 :
-                               echo "<a href='admin.php'>Administrer le site</a> - <a href='membre.php'>Espace membre</a>";
+                                echo "<li><a href='admin.php'>Administration</a></li><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si on est modérateur
                             case 1:
-                                echo "<a href='modere.php'>Modérer le site</a> - <a href='membre.php'>Espace membre</a>";
+                                echo "<ul><li><a href='modere.php'>Modération</a></li><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si autre droit (ici simple utilisateur)
-                            default :
-                                echo "<a href='membre.php'>Espace membre</a>";
-                        }?></div>
+                            case 2 :
+                        echo "<ul><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";};} ?>
+       </ul>
+</nav>
+	<div id="content">
+                         <?php
+        if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
+    ?><h1>Telepro-photos.fr</h1>
+                        <form action="" name="connection" method="POST">
+                            <input type="text" name="lelogin" required />
+                            <input type="password" name="lepass" required />
+                            <input type="submit" value="Connexion" />
+                        </form>
+                       
+                        <?php
+}else{
+echo "<h1>Telepro-photos.fr</h1>";
+    
+                            echo "<h3>Bonjour ".$_SESSION['lenom'].'</h3>';
+                        echo "<p>Vous êtes connecté en tant que <span >".$_SESSION['nom_perm']."</span></p>";
+                        
+                        
+      }
+        ?>
+
             </div>
-             <div id="milieu">
-                 <div id="formulaire">
-                <form action="" method="POST" name="onposte">
+             <div>
+                 <table>
+                <form action="" method="POST" name="">
                     <input type="text" name="letitre" value="<?php echo $recup_photo['letitre'] ?>" required /><br/>
  
                     <textarea name="ladesc"><?php echo $recup_photo['ladesc'] ?></textarea><br/>
@@ -132,9 +145,9 @@ $recup_section = mysqli_query($mysqli, $sql);
                     // affichage des sections
                     while($ligne = mysqli_fetch_assoc($recup_section)){
                         if(in_array($ligne['id'], $recup_sect_img)){
-                            $coche = "checked";
+                            $box = "checked";
                         }else{
-                            $coche = "";
+                            $box = "";
                         }
                         echo $ligne['lintitule']." : <input type='checkbox' name='section[]' value='".$ligne['id']."' $coche > - ";
                     }
