@@ -94,9 +94,8 @@ nav li ul {
      height: 29px;
     
  }
- h1{
-     padding-top: 30px;
-     padding-bottom: 25px;
+ h1,h3,p{
+     padding: 0 33% ;
          
  }
  #formulaire{
@@ -142,4 +141,10 @@ nav li ul {
      width: 301px;
       margin-top :10px;
      height: 250px;
+ }
+ form{
+     
+     padding: 0 30% ;
+     
+     
  }

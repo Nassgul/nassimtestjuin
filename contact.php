@@ -5,12 +5,37 @@ require_once 'config.php';
 require_once 'connect.php';
 require_once 'fonctions.php';
 
+if (isset($_POST['lelogin'])) {
+    $lelogin = traite_chaine($_POST['lelogin']);
+    $lemdp = traite_chaine($_POST['lepass']);
 
+    // vérification de l'utilisateur dans la db
+    $sql = "SELECT  u.id, u.lemail, u.lenom, 
+		d.lenom AS nom_perm, d.laperm 
+	FROM utilisateur u
+		INNER JOIN droit d ON u.droit_id = d.id
+    WHERE u.lelogin='$lelogin' AND u.lepass = '$lemdp';";
+    $requete = mysqli_query($mysqli, $sql)or die(mysqli_error($mysqli));
+    $recup_user = mysqli_fetch_assoc($requete);
+
+    // vérifier si on a récupèré un utilisateur
+    if (mysqli_num_rows($requete)) { // vaut true si 1 résultat (ou plus), false si 0
+
+        // si l'utilisateur est bien connecté
+
+        $_SESSION = $recup_user; // transformation des résultats de la requête en variable de session
+        $_SESSION['sid'] = session_id(); // récupération de la clef de session
+        $_SESSION['lelogin'] = $lelogin; // récupération du login (du POST après traitement)
+        // var_dump($_SESSION);
+        // redirection vers la page d'accueil (pour éviter les doubles connexions par F5)
+        header('./contact.php');
+    }
+}
 
 $recupmail = mysqli_query($mysqli,"SELECT lemail FROM utilisateur WHERE id=1");
 $result = mysqli_fetch_assoc($recupmail);
 
-if (isset($_POST['nom'])) {
+if (isset($_POST)) {
     $nom = strip_tags(trim($_POST['nom']));
     $titre = strip_tags(trim($_POST['titre']));
     $mail = strip_tags(trim($_POST['lemail']));
@@ -93,7 +118,7 @@ echo "<h1>Telepro-photos.fr</h1>";
        
                     <div id="contact">
                         
-                <form name="monform" method="POST">
+                <form name="form" method="POST">
                 <input name="nom" type="text" placeholder="Nom" required/><br/>
                 <input name="titre" type="text" placeholder="Titre" /><br/>
                 <input  name="lemail" type="email" placeholder="Votre adresse email" required /><br/>

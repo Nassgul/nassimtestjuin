@@ -4,6 +4,33 @@ require_once 'config.php';
 require_once 'connect.php';
 require_once 'fonctions.php';
 
+if (isset($_POST['lelogin'])) {
+    $lelogin = traite_chaine($_POST['lelogin']);
+    $lemdp = traite_chaine($_POST['lepass']);
+
+    // vérification de l'utilisateur dans la db
+    $sql = "SELECT  u.id, u.lemail, u.lenom, 
+		d.lenom AS nom_perm, d.laperm 
+	FROM utilisateur u
+		INNER JOIN droit d ON u.droit_id = d.id
+    WHERE u.lelogin='$lelogin' AND u.lepass = '$lemdp';";
+    $requete = mysqli_query($mysqli, $sql)or die(mysqli_error($mysqli));
+    $recup_user = mysqli_fetch_assoc($requete);
+
+    // vérifier si on a récupèré un utilisateur
+    if (mysqli_num_rows($requete)) { // vaut true si 1 résultat (ou plus), false si 0
+
+        // si l'utilisateur est bien connecté
+
+        $_SESSION = $recup_user; // transformation des résultats de la requête en variable de session
+        $_SESSION['sid'] = session_id(); // récupération de la clef de session
+        $_SESSION['lelogin'] = $lelogin; // récupération du login (du POST après traitement)
+        // var_dump($_SESSION);
+        // redirection vers la page d'accueil (pour éviter les doubles connexions par F5)
+        header('./categories.php?idsection=1');
+    }
+}
+
 if (isset($_GET['idsection']) && ctype_digit($_GET['idsection'])){
     
     $recupget = "WHERE rubriques_id= ".$_GET['idsection'];
