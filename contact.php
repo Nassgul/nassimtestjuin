@@ -56,15 +56,15 @@ if (isset($_POST['nom'])) {
 		   if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {echo " ";}else{switch ($_SESSION['laperm']) {
                             // si on est l'admin
                             case 0 :
-                                echo "<li><a href='admin.php'>Administration</a></li><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
+                                echo "<li><a href='admin.php'>Administration</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si on est modérateur
                             case 1:
-                                echo "<li><a href='modere.php'>Modération</a></li><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
+                                echo "<li><a href='modere.php'>Modération</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si autre droit (ici simple utilisateur)
                             case 2 :
-                        echo "<li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";};} ?>
+                        echo "<li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";};} ?>
        </ul>
 </nav>
 	<div id="content">
