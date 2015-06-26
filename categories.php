@@ -27,50 +27,10 @@ if (isset($_POST['lelogin'])) {
         $_SESSION['lelogin'] = $lelogin; // récupération du login (du POST après traitement)
         // var_dump($_SESSION);
         // redirection vers la page d'accueil (pour éviter les doubles connexions par F5)
-        header('./categories.php?idsection=1');
+        header('./');
     }
 }
 
-if (isset($_GET['idsection']) && ctype_digit($_GET['idsection'])){
-    
-    $recupget = "WHERE rubriques_id= ".$_GET['idsection'];
-}
-$recup_nb_test = "select count(*) as nb from photo_has_rubriques $recupget";
-// requete de récupération
-$tot = mysqli_query($mysqli,$recup_nb_test);
-// transformation du résultat en tableau associatif
-$maligne = mysqli_fetch_assoc($tot);
-// variable contenant le nombre total de proverbes
-$nb_total = $maligne['nb'];
-
-
-
-if(isset($_GET[$get_pagination])){
-  
-    if(ctype_digit($_GET[$get_pagination])){
-     
-        $page_actu = $_GET[$get_pagination];
-    }else{ 
-       $page_actu = 1; 
-    }
-}else{ 
-    $page_actu = 1;
-}
-
-$debut = ($page_actu -1) * $elements_par_page;
-if (isset($_GET['idsection']) && ctype_digit($_GET['idsection'])){
-    
-    $ajout_requete = "WHERE r.id = ".$_GET['idsection'];
-}else {
-    $ajout_requete = "";
-}
-
-if (isset($_GET['idsection']) && ctype_digit($_GET['idsection'])){
-    
-    $ajout_requete = "WHERE r.id = ".$_GET['idsection'];
-}else {
-    $ajout_requete = "";
-}
 
 
 $sql = "SELECT p.lenom,p.lextension,p.ladesc,p.letitre, u.lelogin, 
@@ -80,7 +40,6 @@ $sql = "SELECT p.lenom,p.lextension,p.ladesc,p.letitre, u.lelogin,
     INNER JOIN utilisateur u ON u.id = p.utilisateur_id
     LEFT JOIN photo_has_rubriques h ON h.photo_id = p.id
     LEFT JOIN rubriques r ON h.rubriques_id = r.id
-    $ajout_requete
     GROUP BY p.id
     ORDER BY p.id DESC
     LIMIT $debut,$elements_par_page;

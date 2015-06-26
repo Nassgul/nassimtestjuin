@@ -144,7 +144,10 @@ nav li ul {
  }
  form{
      
-     padding: 0 30% ;
+   
      
      
+ }
+ form input type[checkbox]{
+     padding: 0 0;
  }

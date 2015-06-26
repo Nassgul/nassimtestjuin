@@ -15,7 +15,7 @@ if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {
 if(isset($_GET['id'])&&  ctype_digit($_GET['id'])){
     $idphoto = $_GET['id'];
 }else{
-   header("location: client.php");
+   header("location: membre.php");
 }
 
 // si on a envoyé le formulaire et qu'un fichier est bien attaché
@@ -41,7 +41,7 @@ if(isset($_POST['letitre'])){
                 }
             }
             }
-            header("Location: client.php");
+            header("Location: membre.php");
 }
 
 
@@ -95,15 +95,15 @@ $recup_section = mysqli_query($mysqli, $sql);
 		   if (!isset($_SESSION['sid']) || $_SESSION['sid'] != session_id()) {echo " ";}else{switch ($_SESSION['laperm']) {
                             // si on est l'admin
                             case 0 :
-                                echo "<li><a href='admin.php'>Administration</a></li><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
+                                echo "<li><a href='admin.php'>Administration</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si on est modérateur
                             case 1:
-                                echo "<ul><li><a href='modere.php'>Modération</a></li><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
+                                echo "<li><a href='modere.php'>Modération</a></li><li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";
                                 break;
                             // si autre droit (ici simple utilisateur)
                             case 2 :
-                        echo "<ul><li><a href='client.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";};} ?>
+                        echo "<li><a href='membre.php'>Espace client</a></li><li><a href='deconnect.php'>Déconnexion</a></li>";};} ?>
        </ul>
 </nav>
 	<div id="content">
@@ -129,7 +129,7 @@ echo "<h1>Telepro-photos.fr</h1>";
 
             </div>
              <div>
-                 <table>
+                 
                 <form action="" method="POST" name="">
                     <input type="text" name="letitre" value="<?php echo $recup_photo['letitre'] ?>" required /><br/>
  
@@ -149,9 +149,10 @@ echo "<h1>Telepro-photos.fr</h1>";
                         }else{
                             $box = "";
                         }
-                        echo $ligne['lintitule']." : <input type='checkbox' name='section[]' value='".$ligne['id']."' $coche > - ";
+                        echo $ligne['lintitule']." : <input type='checkbox' name='section[]' value='".$ligne['id']."' $box > - ";
                     }
-                    echo "<br/><img src='".CHEMIN_RACINE.$dossier_mini.$recup_photo['lenom'].".jpg' alt='' />";
+                    
+                    echo "<br/><img src='".CHEMIN_RACINE.$dossier_mini.$recup_photo['idrub'].".jpg' alt='' />";
                     ?>
                 </form>
             </div>
