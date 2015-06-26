@@ -29,3 +29,6 @@ $mini_qualite = 70;
 
 // formats acceptés en minuscule dans un tableau, séparé par des ','
 $formats_acceptes = array('jpg','jpeg','png');
+
+$get_pagination = "pg";
+$elements_par_page = 20;
