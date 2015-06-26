@@ -3,7 +3,7 @@ session_start();
 require_once 'config.php';
 require_once 'connect.php';
 require_once 'fonctions.php';
-require_once 'mes-fonctions.php';
+
 
 if (isset($_POST['lelogin'])) {
     $lelogin = traite_chaine($_POST['lelogin']);
